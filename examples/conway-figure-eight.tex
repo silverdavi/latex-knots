@@ -1,0 +1,48 @@
+\documentclass[11pt]{article}
+\usepackage[margin=1in]{geometry}
+\usepackage{knotdiag}
+
+\kdset{scale=0.72, line width=0.9pt, gap=4.2}
+
+\begin{document}
+
+\section*{Conway polynomial of the figure-eight knot}
+
+We use the oriented skein relation
+\[
+  \skeinrel,
+  \qquad
+  \nablaknot{unknot}=1,
+  \qquad
+  \nablaknot{unlink}=0.
+\]
+
+Choose a crossing of the figure-eight knot.  Switching it gives an
+unknot, while the oriented smoothing gives the negative Hopf link:
+\begin{knotcalc}
+  \nablaknot{figureeight}
+    &= \nablaknot[change=2]{figureeight}
+       + z\,\nablaknot{hopf} \\
+    &= \nablaknot{unknot}
+       + z\,\nablaknot{hopf}.
+\end{knotcalc}
+
+Apply the skein relation once more to the Hopf link.  A crossing change
+gives the two-component unlink and the smoothing gives an unknot:
+\begin{knotcalc}
+  \nablaknot{hopf}
+    &= \nablaknot{unlinkx}
+       - z\,\nablaknot{unknot} \\
+    &= \nablaknot{unlink}
+       - z\,\nablaknot{unknot} \\
+    &= 0-z=-z.
+\end{knotcalc}
+
+Therefore
+\begin{knotcalc}
+  \nablaknot{figureeight}
+    &= 1+z(-z) \\
+    &= \boxed{1-z^2}.
+\end{knotcalc}
+
+\end{document}

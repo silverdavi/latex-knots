@@ -1,0 +1,315 @@
+%% knotdiag.sty -- inline oriented knot diagrams for skein calculations
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{knotdiag}[2026/08/17 v0.1 Inline knot diagrams for skein calculations]
+
+\RequirePackage{expl3}
+\RequirePackage{xparse}
+\RequirePackage{amsmath}
+\RequirePackage{tikz}
+\usetikzlibrary{
+  knots,
+  hobby,
+  decorations.markings,
+  arrows.meta,
+  calc,
+  bending
+}
+
+\ExplSyntaxOn
+
+\clist_new:N \l_kd_flip_clist
+\clist_new:N \l_kd_change_clist
+\tl_new:N \l_kd_draft_tl
+\bool_new:N \l_kd_arrows_bool
+\bool_new:N \l_kd_debug_bool
+\dim_new:N \l_kd_linewidth_dim
+\tl_new:N \l_kd_scale_tl
+\tl_new:N \l_kd_clipwidth_tl
+\tl_new:N \l_kd_gap_tl
+\dim_new:N \l_kd_clipradius_dim
+\tl_new:N \l_kd_arrowstyle_tl
+\tl_new:N \l_kd_arrowlength_tl
+\tl_new:N \l_kd_arrowwidth_tl
+\tl_new:N \l_kd_arrowlengthfactor_tl
+\tl_new:N \l_kd_arrowwidthfactor_tl
+
+\keys_define:nn { knotdiag }
+{
+  scale        .tl_set:N    = \l_kd_scale_tl,
+  scale        .initial:n   = 0.40,
+  line~width   .dim_set:N   = \l_kd_linewidth_dim,
+  line~width   .initial:n   = 0.72pt,
+  clip~width   .tl_set:N    = \l_kd_clipwidth_tl,
+  clip~width   .initial:n   = 3.2,
+  gap          .tl_set:N    = \l_kd_gap_tl,
+  gap          .initial:n   = 4,
+  arrow~length .tl_set:N    = \l_kd_arrowlengthfactor_tl,
+  arrow~length .initial:n   = 5,
+  arrow~width  .tl_set:N    = \l_kd_arrowwidthfactor_tl,
+  arrow~width  .initial:n   = 4,
+  arrows       .bool_set:N  = \l_kd_arrows_bool,
+  arrows       .initial:n   = true,
+  flip         .clist_set:N = \l_kd_flip_clist,
+  change       .clist_set:N = \l_kd_change_clist,
+  draft        .choice:,
+  draft / false     .code:n = { \tl_set:Nn \l_kd_draft_tl {off} },
+  draft / crossings .code:n = { \tl_set:Nn \l_kd_draft_tl {crossings} },
+  draft / strands   .code:n = { \tl_set:Nn \l_kd_draft_tl {strands} },
+  draft        .initial:n   = false,
+  debug        .bool_set:N  = \l_kd_debug_bool,
+  debug        .initial:n   = false,
+}
+
+\NewDocumentCommand { \kdset } { m }
+{
+  \keys_set:nn { knotdiag } {#1}
+}
+
+\cs_new_protected:Npn \kd_xor_changes:
+{
+  \clist_map_inline:Nn \l_kd_change_clist
+  {
+    \clist_if_in:NnTF \l_kd_flip_clist {##1}
+      { \clist_remove_all:Nn \l_kd_flip_clist {##1} }
+      { \clist_put_right:Nn \l_kd_flip_clist {##1} }
+  }
+}
+
+\cs_new_protected:Npn \kd_apply_flips:
+{
+  \kd_xor_changes:
+  \clist_if_empty:NF \l_kd_flip_clist
+  {
+    \exp_args:NV \flipcrossings \l_kd_flip_clist
+  }
+}
+
+\tikzset{
+  kd~arrow~at/.style={
+    only~when~rendering/.style={
+      decoration={
+        markings,
+        mark=at~position~#1~with~{
+          \arrow{Stealth[
+            length=\l_kd_arrowlength_tl,
+            width=\l_kd_arrowwidth_tl,
+            flex
+          ]}
+        }
+      },
+      postaction={decorate}
+    }
+  }
+}
+
+%% #1 extra knot-environment keys, #2 body (strands)
+\cs_new_protected:Npn \kd_picture:nn #1#2
+{
+  \dim_set:Nn \l_kd_clipradius_dim
+    { \fp_to_dim:n { \l_kd_linewidth_dim * \l_kd_gap_tl } }
+  \tl_set:Nx \l_kd_arrowlength_tl
+    { \fp_to_dim:n { \l_kd_linewidth_dim * \l_kd_arrowlengthfactor_tl } }
+  \tl_set:Nx \l_kd_arrowwidth_tl
+    { \fp_to_dim:n { \l_kd_linewidth_dim * \l_kd_arrowwidthfactor_tl } }
+  \ensuremath{
+    \vcenter{
+      \hbox{
+        \begin{tikzpicture}[
+            use~Hobby~shortcut,
+            scale=\l_kd_scale_tl,
+            line~cap=round,
+            line~join=round,
+          ]
+          \begin{knot}[
+              consider~self~intersections=false,
+              ignore~endpoint~intersections=true,
+              clip~width=\l_kd_clipwidth_tl,
+              clip~radius=\l_kd_clipradius_dim,
+              line~width=\l_kd_linewidth_dim,
+              background~color=white,
+              every~strand/.style={
+                draw=black,
+                line~width=\l_kd_linewidth_dim,
+              },
+              draft~mode=\l_kd_draft_tl,
+              debug=\bool_if:NTF \l_kd_debug_bool {true} {false},
+              #1
+            ]
+            #2
+            \kd_apply_flips:
+          \end{knot}
+        \end{tikzpicture}
+      }
+    }
+  }
+}
+
+\cs_new_protected:Npn \kd_declare:nn #1#2
+{
+  \cs_set_protected:cpn { kd_fig_#1: } {#2}
+}
+
+\NewDocumentCommand { \kddeclare } { m m }
+{
+  \kd_declare:nn {#1} {#2}
+}
+
+\cs_new_protected:Npn \kd_use:n #1
+{
+  \cs_if_exist:cTF { kd_fig_#1: }
+    { \use:c { kd_fig_#1: } }
+    {
+      \PackageError{knotdiag}
+        {Unknown~diagram~'#1'}
+        {Declare~it~with~\token_to_str:N \kddeclare.}
+    }
+}
+
+\NewDocumentCommand { \kd } { O{} m }
+{
+  \group_begin:
+    \clist_clear:N \l_kd_flip_clist
+    \clist_clear:N \l_kd_change_clist
+    \keys_set:nn { knotdiag } {#1}
+    \kd_use:n {#2}
+  \group_end:
+}
+
+\NewDocumentCommand { \nablaknot } { O{} m }
+{
+  \nabla \mathopen{} \left( \kd[#1]{#2} \right)
+}
+
+\NewDocumentCommand { \kdsetdefaultflips } { m }
+{
+  \clist_if_empty:NT \l_kd_flip_clist
+  {
+    \clist_set:Nn \l_kd_flip_clist {#1}
+  }
+}
+
+\NewDocumentCommand { \kdarrowat } { m }
+{
+  \bool_if:NTF \l_kd_arrows_bool
+    { \tl_set:Nn \l_kd_arrowstyle_tl { kd~arrow~at=#1 } }
+    { \tl_clear:N \l_kd_arrowstyle_tl }
+}
+
+\NewDocumentCommand { \kdstrand } { O{} m }
+{
+  \exp_args:NV \kd_strand_aux:nnn \l_kd_arrowstyle_tl {#1} {#2}
+}
+
+\cs_new_protected:Npn \kd_strand_aux:nnn #1#2#3
+{
+  \strand[#1,#2] #3 ;
+}
+
+\NewDocumentCommand { \kdpicture } { O{} m }
+{
+  \kd_picture:nn {#1} {#2}
+}
+
+\NewDocumentCommand { \skeinrel } { }
+{
+  \nablaknot{L+} - \nablaknot{L-} = z\,\nablaknot{L0}
+}
+
+\NewDocumentEnvironment { knotcalc } { }
+{
+  \dim_set:Nn \jot { 7pt }
+  \use:c { align* }
+}
+{
+  \use:c { endalign* }
+}
+
+\ExplSyntaxOff
+
+% Named diagrams
+
+\kddeclare{unknot}{%
+  \kdarrowat{0.12}%
+  \kdpicture{%
+    \kdstrand{(0,0) circle[radius=0.72]}%
+  }%
+}
+
+\kddeclare{unlink}{%
+  \kdpicture{%
+    \kdarrowat{0.12}%
+    \kdstrand{(-0.85,0) circle[radius=0.48]}%
+    \kdarrowat{0.12}%
+    \kdstrand{(0.85,0) circle[radius=0.48]}%
+  }%
+}
+
+\kddeclare{trefoil}{%
+  \kdarrowat{0.06}%
+  \kdpicture[consider self intersections]{%
+    \kdstrand{([closed]90:1.0)
+      .. (210:0.45) .. (330:1.0)
+      .. (90:0.45) .. (210:1.0)
+      .. (330:0.45)}%
+  }%
+}
+
+\kddeclare{figureeight}{%
+  \kdarrowat{0.04}%
+  \kdpicture[
+    consider self intersections,
+    end tolerance=1pt
+  ]{%
+    \kdstrand{([closed]0,2)
+      .. (0.5,1.5) .. (-0.5,0) .. (0.5,-0.6667)
+      .. (1.3333,0) .. (0,1.5) .. (-1.3333,0)
+      .. (-0.5,-0.6667) .. (0.5,0) .. (-0.5,1.5)}%
+  }%
+}
+
+\kddeclare{hopf}{%
+  \kdsetdefaultflips{1}%
+  \kdpicture{%
+    \kdarrowat{0.20}%
+    \kdstrand{(-0.32,0) circle[radius=0.55]}%
+    \kdarrowat{0.70}%
+    \kdstrand{(0.32,0) circle[radius=0.55]}%
+  }%
+}
+
+\kddeclare{unlinkx}{%
+  \kdpicture{%
+    \kdarrowat{0.20}%
+    \kdstrand{(-0.32,0) circle[radius=0.55]}%
+    \kdarrowat{0.70}%
+    \kdstrand{(0.32,0) circle[radius=0.55]}%
+  }%
+}
+
+\kddeclare{L+}{%
+  \kdsetdefaultflips{1}%
+  \kdpicture{%
+    \kdarrowat{0.86}%
+    \kdstrand{(-0.42,-0.55) to[out=70,in=250] (0.42,0.55)}%
+    \kdarrowat{0.86}%
+    \kdstrand{(0.42,-0.55) to[out=110,in=290] (-0.42,0.55)}%
+  }%
+}
+
+\kddeclare{L-}{%
+  \kdpicture{%
+    \kdarrowat{0.86}%
+    \kdstrand{(-0.42,-0.55) to[out=70,in=250] (0.42,0.55)}%
+    \kdarrowat{0.86}%
+    \kdstrand{(0.42,-0.55) to[out=110,in=290] (-0.42,0.55)}%
+  }%
+}
+
+\kddeclare{L0}{%
+  \kdpicture{%
+    \kdarrowat{0.86}%
+    \kdstrand{(-0.42,-0.55) to[out=90,in=270] (-0.42,0.55)}%
+    \kdarrowat{0.86}%
+    \kdstrand{(0.42,-0.55) to[out=90,in=270] (0.42,0.55)}%
+  }%
+}

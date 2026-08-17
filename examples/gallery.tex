@@ -1,0 +1,64 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.8in]{geometry}
+\usepackage{xcolor}
+\usepackage{knotdiag}
+
+\kddeclare{colouredhopf}{%
+  \kdpicture{%
+    \kdarrowat{0.20}%
+    \kdstrand[red!75!black]{(-0.32,0) circle[radius=0.55]}%
+    \kdarrowat{0.70}%
+    \kdstrand[blue!75!black]{(0.32,0) circle[radius=0.55]}%
+    \flipcrossings{1}%
+  }%
+}
+
+\begin{document}
+\section*{Knot diagram examples}
+
+\kdset{scale=1.15, line width=1.15pt, gap=4.5}
+
+\subsection*{Named oriented diagrams}
+\[
+  \kd{unknot}
+  \qquad
+  \kd{trefoil}
+  \qquad
+  \kd{figureeight}
+  \qquad
+  \kd{hopf}
+  \qquad
+  \kd{unlink}
+\]
+
+\subsection*{Crossing changes}
+The same projection can be reused while selected crossings are switched:
+\[
+  \kd{trefoil}
+  \longrightarrow
+  \kd[change=2]{trefoil},
+  \qquad
+  \kd{figureeight}
+  \longrightarrow
+  \kd[change=2]{figureeight}.
+\]
+
+\subsection*{Local skein triple}
+\[
+  \kd{L+}
+  \qquad
+  \kd{L-}
+  \qquad
+  \kd{L0}
+  \qquad\qquad
+  \skeinrel.
+\]
+
+\subsection*{Custom strands and colour}
+Diagrams can be declared from arbitrary TikZ paths, with per-strand
+styling:
+\[
+  \kd{colouredhopf}.
+\]
+
+\end{document}
