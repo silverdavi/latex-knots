@@ -22,10 +22,15 @@ Global and per-diagram options include `scale`, `line width`, `gap`,
 
 ## Examples
 
-- `examples/conway-figure-eight.tex` gives the full skein calculation
-  \(\nabla(4_1)=1-z^2\).
-- `examples/gallery.tex` shows named diagrams, crossing changes, a local
-  skein triple, and custom coloured strands.
+- Conway polynomial of the figure-eight knot:
+  [source](examples/conway-figure-eight.tex) ·
+  [rendered PDF](examples/conway-figure-eight.pdf)  
+  Full skein calculation of \(\nabla(4_1)=1-z^2\).
+- Knot diagram gallery:
+  [source](examples/gallery.tex) ·
+  [rendered PDF](examples/gallery.pdf)  
+  Named diagrams, crossing changes, a local skein triple, and custom
+  coloured strands.
 
 Compile from the repository root with:
 

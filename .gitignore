@@ -5,6 +5,8 @@
 *.log
 *.out
 *.pdf
+!examples/conway-figure-eight.pdf
+!examples/gallery.pdf
 *.synctex.gz
 *.toc
 
